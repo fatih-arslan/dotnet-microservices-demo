@@ -92,6 +92,8 @@ namespace AuctionService
             auction.Item.Mileage = updateAuctionDto.Mileage ?? auction.Item.Mileage;
             auction.Item.Year = updateAuctionDto.Year ?? auction.Item.Year;
 
+            await _publishEndPoint.Publish(_mapper.Map<AuctionUpdated>(auction));
+
             var result = await _context.SaveChangesAsync() > 0;
             if (result) return Ok();
 
@@ -108,6 +110,8 @@ namespace AuctionService
             //TODO: check seller == username
 
             _context.Auctions.Remove(auction);
+
+            await _publishEndPoint.Publish<AuctionDeleted>(new { Id = auction.Id.ToString() });
 
             var result = await _context.SaveChangesAsync() > 0;
 
