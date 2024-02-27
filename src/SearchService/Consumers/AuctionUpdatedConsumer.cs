@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Contracts;
 using MassTransit;
+using MongoDB.Entities;
 using SearchService.Models;
 
 namespace SearchService
