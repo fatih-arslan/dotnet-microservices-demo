@@ -13,22 +13,35 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddHttpClient<AuctionServiceHttpClient>().AddPolicyHandler(GetPolicy());
+
+// Configuring MassTransit with services in the application
 builder.Services.AddMassTransit(x =>
 {
+    // Add consumers from the namespace containing AuctionCreatedConsumer
     x.AddConsumersFromNamespaceContaining<AuctionCreatedConsumer>();
+
+    // Set the endpoint name formatter to kebab case with "search" prefix
     x.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter("search"));
+
+    // Configure MassTransit to use RabbitMQ
     x.UsingRabbitMq((context, cfg) =>
     {
+        // Configure a specific receive endpoint for handling AuctionCreated messages
         cfg.ReceiveEndpoint("search-auction-created", e =>
         {
+            // Use message retry with an interval of 5 seconds
             e.UseMessageRetry(r => r.Interval(5, 5));
 
+            // Configure the consumer for handling AuctionCreated messages
             e.ConfigureConsumer<AuctionCreatedConsumer>(context);
         });
 
+        // Configure other endpoints based on conventions
         cfg.ConfigureEndpoints(context);
     });
 });
+
+
 var app = builder.Build();
 
 app.UseAuthorization();
