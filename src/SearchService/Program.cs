@@ -26,6 +26,13 @@ builder.Services.AddMassTransit(x =>
     // Configure MassTransit to use RabbitMQ
     x.UsingRabbitMq((context, cfg) =>
     {
+        // Configure RabbitMQ host address
+        cfg.Host(builder.Configuration["RabbitMq:Host"], "/", host =>
+        {
+            host.Username(builder.Configuration.GetValue("RabbitMq:Username", "guest"));
+            host.Password(builder.Configuration.GetValue("RabbitMq:Password", "guest"));
+        });
+
         // Configure a specific receive endpoint for handling AuctionCreated messages
         cfg.ReceiveEndpoint("search-auction-created", e =>
         {

@@ -32,6 +32,7 @@ builder.Services.AddMassTransit(x =>
     // Configuring MassTransit to use RabbitMQ as the messaging transport
     x.UsingRabbitMq((context, cfg) =>
     {
+        // Configure RabbitMQ host address
         cfg.Host(builder.Configuration["RabbitMq:Host"], "/", host =>
         {
             host.Username(builder.Configuration.GetValue("RabbitMq:Username", "guest"));
