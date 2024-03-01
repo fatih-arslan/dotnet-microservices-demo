@@ -7,7 +7,7 @@ services:
       - "5432:5432"
     volumes:
       - /var/lib/postgresql/data
-  mongodb:
+  mongo:
     image: mongo
     environment:
       - MONGO_INITDB_ROOT_USERNAME=root
@@ -17,7 +17,7 @@ services:
     volumes:
       - /var/lib/mongodb/data
   rabbitmq:
-    image: rabbitmq:3-management-alpine
+    image: rabbitmq:3-management-alpine    
     ports:
       - "5672:5672"
       - "15672:15672"
@@ -27,9 +27,11 @@ services:
       context: .
       dockerfile: src/AuctionService/Dockerfile
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_ENVIRONMENT=Docker
       - ASPNETCORE_URLS=http://+:80
       - RabbitMq_Host=rabbitmq
+      - RabbitMq_Username=guest
+      - RabbitMq_Password=guest
       - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=Auctions;User Id=postgres;Password=1234;
       - IdentityServiceUrl=http://identity-svc
     ports:
@@ -38,24 +40,46 @@ services:
       - postgres
       - rabbitmq
   search-svc:
-    image: fatih748/search-svc:latest
+    image: fatih748/search-svc:latest      
     build:
       context: .
       dockerfile: src/SearchService/Dockerfile
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_ENVIRONMENT=Docker
       - ASPNETCORE_URLS=http://+:80
       - RabbitMq_Host=rabbitmq
-      - ConnectionStrings__MongoDbConnection=mongodb://mongodb:27017/
+      - RabbitMq_Username=guest
+      - RabbitMq_Password=guest
+      - MONGO_USERNAME=root
+      - MONGO_PASSWORD=1234
+      - ConnectionStrings__MongoDbConnection=mongodb://root:1234@mongo:27017/
       - AuctionServiceUrl=http://auction-svc
     ports:
       - "7002:80"
     depends_on:
-      - mongodb
+      - mongo
       - rabbitmq
-
-
-
-# volumes:
-#   pgdata:      
-#   mongodata:  
+  identity-svc:
+    image: fatih748/identity-svc:latest
+    build:
+      context: .
+      dockerfile: src/IdentityService/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Docker
+      - ASPNETCORE_URLS=http://+:80      
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=Identity;User Id=postgres;Password=1234;
+    ports:
+      - "5000:80"
+    depends_on:
+      - postgres
+  gateway-svc:
+    image: fatih748/gateway-svc:latest
+    build:
+      context: .
+      dockerfile: src/GatewayService/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Docker
+      - ASPNETCORE_URLS=http://+:80
+    ports:
+      - "6001:80"
+ 

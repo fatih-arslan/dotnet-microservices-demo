@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:8.0.201 as build
+FROM mcr.microsoft.com/dotnet/sdk:8.0 as build
 WORKDIR /app
 EXPOSE 80
 
@@ -15,13 +15,12 @@ COPY src/IdentityService/IdentityService.csproj src/IdentityService/IdentityServ
 RUN dotnet restore Roadworthy.sln
 
 # Copy the app folders over
-COPY src/SearchService src/SearchService
-COPY src/Contracts src/Contracts
-WORKDIR /app/src/SearchService
+COPY src/IdentityService src/IdentityService
+WORKDIR /app/src/IdentityService
 RUN dotnet publish -c Release -o /app/src/out
 
 # Build runtime image
 FROM mcr.microsoft.com/dotnet/aspnet:8.0.2
 WORKDIR /app
 COPY --from=build /app/src/out .
-ENTRYPOINT [ "dotnet", "SearchService.dll" ]
+ENTRYPOINT [ "dotnet", "IdentityService.dll" ]

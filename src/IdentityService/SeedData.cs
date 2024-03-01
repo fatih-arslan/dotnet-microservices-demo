@@ -4,6 +4,7 @@ using IdentityService.Data;
 using IdentityService.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Polly;
 using Serilog;
 
 namespace IdentityService;

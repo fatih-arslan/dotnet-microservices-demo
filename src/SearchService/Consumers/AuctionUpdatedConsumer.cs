@@ -17,8 +17,9 @@ namespace SearchService
 
         public async Task Consume(ConsumeContext<AuctionUpdated> context)
         {
-            var item = _mapper.Map<Item>(context.Message);
+            Console.WriteLine($"--> Consuming auction updated {context.Message.Id}");
 
+            var item = _mapper.Map<Item>(context.Message);
             var result = await DB.Update<Item>()
             .Match(a => a.ID == context.Message.Id)
             .ModifyOnly(x => new
@@ -30,6 +31,9 @@ namespace SearchService
                 x.Mileage
             }, item)
             .ExecuteAsync();
+
+            if (!result.IsAcknowledged)
+                throw new MessageException(typeof(AuctionUpdated), "Problem updating mongodb");
         }
     }
 }

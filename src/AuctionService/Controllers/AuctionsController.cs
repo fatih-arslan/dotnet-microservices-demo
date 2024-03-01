@@ -66,6 +66,8 @@ namespace AuctionService
 
             var newAuction = _mapper.Map<AuctionDto>(auction);
 
+            Console.WriteLine("publishing");
+
             await _publishEndPoint.Publish(_mapper.Map<AuctionCreated>(newAuction));
 
             var result = await _context.SaveChangesAsync() > 0;
@@ -95,7 +97,9 @@ namespace AuctionService
             auction.Item.Mileage = updateAuctionDto.Mileage ?? auction.Item.Mileage;
             auction.Item.Year = updateAuctionDto.Year ?? auction.Item.Year;
 
-            await _publishEndPoint.Publish(_mapper.Map<AuctionUpdated>(auction));
+            var updatedAuction = _mapper.Map<AuctionUpdated>(auction);
+
+            await _publishEndPoint.Publish(updatedAuction);
 
             var result = await _context.SaveChangesAsync() > 0;
             if (result) return Ok();
