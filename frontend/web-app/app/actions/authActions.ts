@@ -10,10 +10,9 @@ export async function getSession() {
 
 export async function getCurrentUser() {
     try{
-        const session = await getServerSession();
+        const session = await getSession();
         
         if(!session) return null;
-
         return session.user
 
     } catch (error) {
@@ -21,7 +20,7 @@ export async function getCurrentUser() {
     }
 }
 
-export async function getTokenWorkaraound() {
+export async function getTokenWorkaround() {
     const req = {
         headers: Object.fromEntries(headers() as Headers),
         cookies: Object.fromEntries(

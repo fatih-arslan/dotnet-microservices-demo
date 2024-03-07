@@ -1,13 +1,13 @@
 import React from 'react'
 import Heading from '../components/Heading';
-import { getSession, getTokenWorkaraound } from '../actions/authActions';
+import { getSession, getTokenWorkaround } from '../actions/authActions';
 import AuthTest from './AuthTest';
 
 
 // /session
 async function Session() {
     const session = await getSession();
-    const token = await getTokenWorkaraound();
+    const token = await getTokenWorkaround();
 
     return (
         <div>
