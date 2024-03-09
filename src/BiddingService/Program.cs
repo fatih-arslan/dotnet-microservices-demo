@@ -1,43 +1,22 @@
-using AuctionService;
-using AuctionService.Consumers;
-using AuctionService.Data;
+using BiddingService;
 using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.EntityFrameworkCore;
-using Npgsql;
+using MongoDB.Driver;
+using MongoDB.Entities;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
 builder.Services.AddControllers();
-builder.Services.AddDbContext<AuctionDbContext>(
-    options => options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
-);
-builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 // Configuring MassTransit with services in the application
 builder.Services.AddMassTransit(x =>
 {
+    x.AddConsumersFromNamespaceContaining<AuctionCreatedConsumer>();
 
-    // Adding Entity Framework Outbox for message reliability and persistence,
-    // using AuctionDbContext as the database context
-    x.AddEntityFrameworkOutbox<AuctionDbContext>(o =>
-    {
-        // Setting a delay for querying the outbox to avoid frequent checks
-        o.QueryDelay = TimeSpan.FromSeconds(10);
-
-        // Configuring to use PostgreSQL as the underlying storage mechanism
-        o.UsePostgres();
-        // UseBusOutBox enables the usage of the MassTransit outbox feature.
-        o.UseBusOutbox();
-    });
-
-    // Adding consumers from the namespace containing AuctionFinishedConsumer
-    x.AddConsumersFromNamespaceContaining<AuctionFinishedConsumer>();
-
-    // Setting endpoint name formatter to kebab case for "auction" endpoints
-    x.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter("auction", false));
+    // Set the endpoint name formatter to kebab case with "bids" prefix
+    x.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter("bids", false));
 
     // Configuring MassTransit to use RabbitMQ as the messaging transport
     x.UsingRabbitMq((context, cfg) =>
@@ -72,25 +51,17 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         options.TokenValidationParameters.NameClaimType = "username";
     });
 
-builder.Services.AddGrpc();
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+builder.Services.AddHostedService<CheckAuctionFinished>();
+builder.Services.AddScoped<GrpcAuctionClient>();
 
 var app = builder.Build();
 
-app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-app.MapGrpcService<GrpcAuctionService>();
 
-try
-{
-    DbInitializer.InitDb(app);
-}
-catch (Exception ex)
-{
-    Console.WriteLine(ex);
-}
-
-
+await DB.InitAsync("BidDb", MongoClientSettings
+    .FromConnectionString(builder.Configuration.GetConnectionString("BidDbConnection")));
 
 app.Run();
